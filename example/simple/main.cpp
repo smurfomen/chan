@@ -23,8 +23,8 @@ int main(int argc, char *argv[])
 
 
     std::thread * pong = new std::thread([&](){
-        auto sender = std::get<1>(ch_pong.rxtx());
-        auto receiver = std::get<0>(ch_ping.rxtx());
+        auto receiver = ch_ping.pipe().first;
+        auto sender = ch_pong.pipe().second;
         while(true)
         {
             qDebug()<<receiver.receive();

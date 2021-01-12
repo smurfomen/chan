@@ -121,9 +121,10 @@ public:
         return sender(&tube, &mtx, &cv);
     }
 
-    std::tuple<receiver, sender> rxtx(){
-        return std::make_tuple<receiver, sender>(receiver(&tube, &mtx, &cv), sender(&tube, &mtx, &cv));
+    std::pair<receiver, sender> pipe() {
+        return std::make_pair<receiver, sender>(receiver(&tube, &mtx, &cv), sender(&tube, &mtx, &cv));
     }
+
 private:
     std::mutex mtx;
     std::condition_variable cv;
