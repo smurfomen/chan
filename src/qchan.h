@@ -26,7 +26,7 @@ public:
 
         T receive() {
             auto o = receive(std::numeric_limits<quint32>::max());
-            if(o.isSome())
+            if(o)
                 return o.unwrap();
 
             throw;
@@ -39,7 +39,7 @@ public:
                 {
                     T tmp = tube->front();
                     tube->pop();
-                    return QOption<T>::Some(std::move(tmp));
+                    return std::move(tmp);
                 }
             }
 
@@ -51,11 +51,11 @@ public:
                 {
                     T tmp = tube->front();
                     tube->pop();
-                    return QOption<T>::Some(std::move(tmp));
+                    return std::move(tmp);
                 }
             }
 
-            return QOption<T>::NONE;
+            return None();
         }
 
         receiver & operator>>(T & t)
