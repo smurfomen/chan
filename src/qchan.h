@@ -2,7 +2,11 @@
 #define QCHAN_H
 #include <mutex>
 #include <condition_variable>
-#include <qoption.h>
+
+#ifdef QOPTION_INCLUDED
+#include <QOption>
+#endif
+
 #include <limits>
 template <typename T>
 class QChan
@@ -32,6 +36,7 @@ public:
             throw;
         }
 
+#ifdef QOPTION_INCLUDED
         QOption<T> receive(qint64 ms) {
             {
                 std::unique_lock<std::mutex> lck(*mtx);
@@ -57,6 +62,7 @@ public:
 
             return None();
         }
+#endif // QOPTION_INCLUDED
 
         receiver & operator>>(T & t)
         {

@@ -1,5 +1,6 @@
 HEADERS += $$PWD/src/qchan.h
 
-INCLUDEPATH += $$PWD/src
+INCLUDEPATH += $$PWD/
 
-include($$PWD/QOption/qoption.pri)
+DISTFILES += \
+        $$PWD/QChan
