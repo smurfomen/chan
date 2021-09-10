@@ -1,6 +1,6 @@
 #include <QCoreApplication>
 
-#include <qchan.h>
+#include <QChan>
 
 #include <thread>
 #include <QDebug>

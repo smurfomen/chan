@@ -8,6 +8,7 @@
 #endif
 
 #include <limits>
+#include <queue>
 template <typename T>
 class QChan
 {
@@ -29,11 +30,29 @@ public:
         }
 
         T receive() {
-            auto o = receive(std::numeric_limits<quint32>::max());
-            if(o)
-                return o.unwrap();
+            {
+                std::unique_lock<std::mutex> lck(*mtx);
+                if(tube->size())
+                {
+                    T tmp = tube->front();
+                    tube->pop();
+                    return std::move(tmp);
+                }
+            }
 
-            throw;
+            std::unique_lock<std::mutex> lck(mcv);
+            if(cv->wait_for(lck, std::chrono::milliseconds(std::numeric_limits<uint32_t>::max())) == std::cv_status::no_timeout)
+            {
+                std::unique_lock<std::mutex> lck(*mtx);
+                if(tube->size())
+                {
+                    T tmp = tube->front();
+                    tube->pop();
+                    return std::move(tmp);
+                }
+            }
+
+            throw ;
         }
 
 #ifdef QOPTION_INCLUDED
