@@ -22,4 +22,6 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-include($$PWD/../../qchan.pri)
+include($$PWD/../qchan.pri)
+
+#include(%path to qoption.pri%) # for non infinite blocking wait message from chan

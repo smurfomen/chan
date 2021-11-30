@@ -29,6 +29,7 @@ public:
 
         }
 
+        /*! \brief  Blocking receive message with waiting in infinite time bounds from otherside chan. */
         T receive() {
             {
                 std::unique_lock<std::mutex> lck(*mtx);
@@ -52,18 +53,19 @@ public:
                 }
             }
 
-            throw ;
+            throw std::runtime_error("QChan::receiver::receive goes on unreachable code");
         }
 
 #ifdef QOPTION_INCLUDED
-        QOption<T> receive(qint64 ms) {
+        /*! \brief  Blocking receive message with waiting a message in bounds ms millisecconds time range from otherside chan. */
+        QOption<T> receive(int64_t ms) {
             {
                 std::unique_lock<std::mutex> lck(*mtx);
                 if(tube->size())
                 {
                     T tmp = tube->front();
                     tube->pop();
-                    return std::move(tmp);
+                    return tmp;
                 }
             }
 
@@ -75,7 +77,7 @@ public:
                 {
                     T tmp = tube->front();
                     tube->pop();
-                    return std::move(tmp);
+                    return tmp;
                 }
             }
 
@@ -83,6 +85,10 @@ public:
         }
 #endif // QOPTION_INCLUDED
 
+        /*!
+         *  \brief  Blocking receive message with waiting in infinite time bounds from otherside chan.
+         *  \return Returns reference to self for composition.
+         */
         receiver & operator>>(T & t)
         {
             t = receive();
@@ -90,9 +96,16 @@ public:
         }
 
     private:
+        /* Queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
         queue_t * tube;
+
+        /* Mutex for lock access to queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
         std::mutex * mtx;
+
+        /* Condition variable for notify when new message is puted to queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
         std::condition_variable * cv;
+
+        /* Mutex for waiting with confition variable. Owned by this receiver object. */
         std::mutex mcv;
     };
 
@@ -103,7 +116,9 @@ public:
         {
 
         }
+
     public:
+        /*! \brief  Send message to otherside chan. */
         void send(const T& t)
         {
             std::lock_guard<std::mutex> lck(*mtx);
@@ -111,7 +126,7 @@ public:
             cv->notify_all();
         }
 
-
+        /*! \brief  Send message to otherside chan. */
         void send(T&&t)
         {
             std::lock_guard<std::mutex> lck(*mtx);
@@ -119,13 +134,20 @@ public:
             cv->notify_all();
         }
 
-
+        /*!
+         *  \brief  Send message to otherside chan.
+         *  \return Returns reference to self for composition.
+         */
         sender & operator<<(const T & t)
         {
             send(t);
             return *this;
         }
 
+        /*!
+         *  \brief  Send message to otherside chan.
+         *  \return Returns reference to self for composition.
+         */
         sender & operator<<(T && t)
         {
             send(std::forward<T>(t));
@@ -133,26 +155,63 @@ public:
         }
 
     private:
+        /* Queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
         queue_t * tube;
+
+        /* Mutex for lock access to queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
         std::mutex * mtx;
+
+        /* Condition variable for notify when new message is puted to queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
         std::condition_variable * cv;
     };
 
-    receiver rx() {
-        return receiver(&tube, &mtx, &cv);
+    /*! \brief  Makes and returns new receiver object. */
+    receiver rx()
+    { return receiver(&tube, &mtx, &cv); }
+
+    /*! \brief  Makes and returns new transmitter object. */
+    sender tx()
+    { return sender(&tube, &mtx, &cv); }
+
+    /*! \brief  Makes and returns new pipe from receiver and sender objects. */
+    std::pair<receiver, sender> pipe()
+    { return std::make_pair<receiver, sender>(receiver(&tube, &mtx, &cv), sender(&tube, &mtx, &cv)); }
+
+    /*! \brief  Clear chan queue messages. */
+    void clear() {
+        std::unique_lock<std::mutex> lck(mtx);
+        while(tube.size()) {
+            tube.pop();
+        }
     }
 
-    sender tx() {
-        return sender(&tube, &mtx, &cv);
-    }
+    /*! \brief  Send message to otherside chan. */
+    void send(const T& t)
+    { tx() << t; }
 
-    std::pair<receiver, sender> pipe() {
-        return std::make_pair<receiver, sender>(receiver(&tube, &mtx, &cv), sender(&tube, &mtx, &cv));
-    }
+    /*! \brief  Send message to otherside chan. */
+    void send(T&&t)
+    { tx() << std::forward<T>(t); }
+
+    /*! \brief  Blocking receive message with waiting in infinite time bounds from otherside chan. */
+    T receive()
+    { return rx().receive(); }
+
+#ifdef QOPTION_INCLUDED
+    /*! \brief  Blocking receive message with waiting a message in bounds ms millisecconds time range from otherside chan. */
+    QOption<T> receive(int64_t ms)
+    { return rx().receive(ms); }
+#endif // QOPTION_INCLUDED
+
 
 private:
+    /* Mutex for waiting with confition variable. Owned by this receiver object. */
     std::mutex mtx;
+
+    /* Condition variable for notify when new message is puted to queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
     std::condition_variable cv;
+
+    /* Queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
     queue_t tube;
 };
 #endif
