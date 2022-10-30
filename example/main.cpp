@@ -1,15 +1,15 @@
 #include <QCoreApplication>
 
-#include <QChan>
+#include <chan>
 
 #include <thread>
 #include <QDebug>
 #include <QThread>
-
+#include <QElapsedTimer>
 
 void non_infinite_wait() {
-#ifdef QOPTION_INCLUDED
-    QChan<const char*> chan;
+#ifdef OPTIONAL_INCLUDED
+	chan<const char*> chan;
 
     chan.send("trash message");
 
@@ -21,7 +21,7 @@ void non_infinite_wait() {
         auto r =  chan.receive(3000);
         if(r)
         {
-            qDebug() << r.unwrap() << ": received after" << tmr.elapsed() - t0 << "milliseconds wait";
+			qDebug() << r.value() << ": received after" << tmr.elapsed() - t0 << "milliseconds wait";
         }
         else {
             qDebug() << "none messages was received after deadline." << tmr.elapsed() - t0 << "milliseconds waited";
@@ -40,13 +40,13 @@ void non_infinite_wait() {
 #endif
     th.join();
 #else
-    qDebug() << "QOption was not included";
+	qDebug() << "optional type was not included";
 #endif
 }
 
 
 void infinite_wait() {
-    QChan<const char*> chan;
+	chan<const char*> chan;
 
     chan.send("trash message");
 
