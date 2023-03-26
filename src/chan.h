@@ -1,5 +1,5 @@
-#ifndef QCHAN_H
-#define QCHAN_H
+#ifndef CHAN_H
+#define CHAN_H
 #include <mutex>
 #include <condition_variable>
 
@@ -49,7 +49,7 @@ public:
 				return std::move(tmp);
 			}
 
-			throw std::runtime_error("QChan::receiver::receive goes on unreachable code");
+			throw std::runtime_error("chan::receiver::receive goes on unreachable code");
 		}
 
 #ifdef OPTIONAL_INCLUDED
@@ -88,13 +88,13 @@ public:
 		}
 
 	private:
-		/* Queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
+		/* Queue messages. Shared between many receivers and transmitters. Owned by chan parent object. */
 		queue_t * tube;
 
-		/* Mutex for lock access to queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
+		/* Mutex for lock access to queue messages. Shared between many receivers and transmitters. Owned by chan parent object. */
 		std::mutex * mtx;
 
-		/* Condition variable for notify when new message is puted to queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
+		/* Condition variable for notify when new message is puted to queue messages. Shared between many receivers and transmitters. Owned by chan parent object. */
 		std::condition_variable * cv;
 	};
 
@@ -148,13 +148,13 @@ public:
 		}
 
 	private:
-		/* Queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
+		/* Queue messages. Shared between many receivers and transmitters. Owned by chan parent object. */
 		queue_t * tube;
 
-		/* Mutex for lock access to queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
+		/* Mutex for lock access to queue messages. Shared between many receivers and transmitters. Owned by chan parent object. */
 		std::mutex * mtx;
 
-		/* Condition variable for notify when new message is puted to queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
+		/* Condition variable for notify when new message is puted to queue messages. Shared between many receivers and transmitters. Owned by chan parent object. */
 		std::condition_variable * cv;
 	};
 
@@ -201,10 +201,10 @@ private:
 	/* Mutex for waiting with confition variable. Owned by this receiver object. */
 	std::mutex mtx;
 
-	/* Condition variable for notify when new message is puted to queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
+	/* Condition variable for notify when new message is puted to queue messages. Shared between many receivers and transmitters. Owned by chan parent object. */
 	std::condition_variable cv;
 
-	/* Queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
+	/* Queue messages. Shared between many receivers and transmitters. Owned by chan parent object. */
 	queue_t tube;
 };
 #endif
