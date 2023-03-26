@@ -41,16 +41,14 @@ public:
 				}
 			}
 
-			std::unique_lock<std::mutex> lck(mcv);
-			if(cv->wait_for(lck, std::chrono::milliseconds(std::numeric_limits<uint32_t>::max())) == std::cv_status::no_timeout)
+			std::unique_lock<std::mutex> lck(*mtx);
+			cv->wait(lck);
+
+			if(tube->size())
 			{
-				std::unique_lock<std::mutex> lck(*mtx);
-				if(tube->size())
-				{
-					T tmp = tube->front();
-					tube->pop();
-					return std::move(tmp);
-				}
+				T tmp = tube->front();
+				tube->pop();
+				return std::move(tmp);
 			}
 
 			throw std::runtime_error("QChan::receiver::receive goes on unreachable code");
@@ -69,10 +67,9 @@ public:
 				}
 			}
 
-			std::unique_lock<std::mutex> lck(mcv);
+			std::unique_lock<std::mutex> lck(*mtx);
 			if(cv->wait_for(lck, std::chrono::milliseconds(ms)) == std::cv_status::no_timeout)
 			{
-				std::unique_lock<std::mutex> lck(*mtx);
 				if(tube->size())
 				{
 					T tmp = tube->front();
@@ -104,9 +101,6 @@ public:
 
 		/* Condition variable for notify when new message is puted to queue messages. Shared between many receivers and transmitters. Owned by QChan parent object. */
 		std::condition_variable * cv;
-
-		/* Mutex for waiting with confition variable. Owned by this receiver object. */
-		std::mutex mcv;
 	};
 
 	class sender {
@@ -121,16 +115,20 @@ public:
 		/*! \brief  Send message to otherside chan. */
 		void send(const T& t)
 		{
-			std::lock_guard<std::mutex> lck(*mtx);
-			tube->push(t);
+			{
+				std::lock_guard<std::mutex> lck(*mtx);
+				tube->push(t);
+			}
 			cv->notify_all();
 		}
 
 		/*! \brief  Send message to otherside chan. */
 		void send(T&&t)
 		{
-			std::lock_guard<std::mutex> lck(*mtx);
-			tube->push(std::forward<T>(t));
+			{
+				std::lock_guard<std::mutex> lck(*mtx);
+				tube->push(std::forward<T>(t));
+			}
 			cv->notify_all();
 		}
 
