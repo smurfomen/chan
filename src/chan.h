@@ -31,17 +31,15 @@ public:
 
 		/*! \brief  Blocking receive message with waiting in infinite time bounds from otherside chan. */
 		T receive() {
+			std::unique_lock<std::mutex> lck(*mtx);
+
+			if(tube->size())
 			{
-				std::unique_lock<std::mutex> lck(*mtx);
-				if(tube->size())
-				{
-					T tmp = tube->front();
-					tube->pop();
-					return std::move(tmp);
-				}
+				T tmp = tube->front();
+				tube->pop();
+				return std::move(tmp);
 			}
 
-			std::unique_lock<std::mutex> lck(*mtx);
 			cv->wait(lck);
 
 			if(tube->size())
@@ -57,17 +55,14 @@ public:
 #ifdef OPTIONAL_INCLUDED
 		/*! \brief  Blocking receive message with waiting a message in bounds ms millisecconds time range from otherside chan. */
 		optional<T> receive(int64_t ms) {
+			std::unique_lock<std::mutex> lck(*mtx);
+			if(tube->size())
 			{
-				std::unique_lock<std::mutex> lck(*mtx);
-				if(tube->size())
-				{
-					T tmp = tube->front();
-					tube->pop();
-					return tmp;
-				}
+				T tmp = tube->front();
+				tube->pop();
+				return tmp;
 			}
 
-			std::unique_lock<std::mutex> lck(*mtx);
 			if(cv->wait_for(lck, std::chrono::milliseconds(ms)) == std::cv_status::no_timeout)
 			{
 				if(tube->size())
